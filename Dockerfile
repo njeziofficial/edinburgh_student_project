@@ -8,13 +8,17 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-COPY ["Edinburgh_Internation_Students.csproj", "./"]
-RUN dotnet restore "Edinburgh_Internation_Students.csproj"
+# Copy csproj and restore
+COPY ["Edinburgh_Internation_Students/Edinburgh_Internation_Students.csproj", "Edinburgh_Internation_Students/"]
+RUN dotnet restore "Edinburgh_Internation_Students/Edinburgh_Internation_Students.csproj"
 
-COPY . .
+# Copy everything else
+COPY Edinburgh_Internation_Students/ Edinburgh_Internation_Students/
+
+WORKDIR /src/Edinburgh_Internation_Students
 RUN dotnet build "Edinburgh_Internation_Students.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# Publish
+# Publish stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "Edinburgh_Internation_Students.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
