@@ -1,9 +1,11 @@
-version: '3.8'
+version: "3.9"
 
 services:
+
   postgres:
     image: postgres:16-alpine
     container_name: edinburgh_postgres
+    restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -12,7 +14,33 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
+    networks:
+      - edinburgh_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: edinburgh_students_api
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=edinburgh_students_db;Username=postgres;Password=postgres
+    networks:
+      - edinburgh_network
+
+networks:
+  edinburgh_network:
+    driver: bridge
 
 volumes:
   postgres_data:
