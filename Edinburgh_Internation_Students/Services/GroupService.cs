@@ -121,6 +121,197 @@ public class GroupService(ApplicationDbContext context, ILogger<GroupService> lo
             logger.LogError(ex, "Error retrieving all groups");
             return ApiResponse<List<GroupDto>>.ErrorResponse(
                 "Failed to retrieve groups",
+                [ex.Message],
+                500
+            );
+        }
+    }
+
+    public async Task<ApiResponse<GroupDto>> UpdateGroupAsync(Guid groupId, UpdateGroupRequest request)
+    {
+        try
+        {
+            var group = await context.Groups.FindAsync(groupId);
+
+            if (group == null)
+            {
+                return ApiResponse<GroupDto>.ErrorResponse("Group not found", null, 404);
+            }
+
+            // Update only provided fields
+            if (!string.IsNullOrWhiteSpace(request.Name))
+            {
+                group.Name = request.Name;
+            }
+
+            if (request.Description != null)
+            {
+                group.Description = request.Description;
+            }
+
+            await context.SaveChangesAsync();
+
+            var onlineThreshold = DateTime.UtcNow.AddMinutes(-10);
+            var memberCount = await context.GroupMembers.CountAsync(gm => gm.GroupId == groupId);
+            var onlineCount = await context.GroupMembers
+                .Include(gm => gm.User)
+                .Where(gm => gm.GroupId == groupId && gm.User.LastActive.HasValue && gm.User.LastActive >= onlineThreshold)
+                .CountAsync();
+
+            var groupDto = new GroupDto
+            {
+                Id = group.Id.ToString(),
+                Name = group.Name,
+                Description = group.Description,
+                Category = request.Category ?? "General",
+                IsPrivate = request.IsPrivate ?? false,
+                MemberCount = memberCount,
+                OnlineCount = onlineCount,
+                CreatedAt = group.CreatedAt
+            };
+
+            return ApiResponse<GroupDto>.SuccessResponse(groupDto, "Group updated successfully");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error updating group {GroupId}", groupId);
+            return ApiResponse<GroupDto>.ErrorResponse(
+                "Failed to update group",
+                new List<string> { ex.Message },
+                500
+            );
+        }
+    }
+
+    public async Task<ApiResponse<bool>> DeleteGroupAsync(Guid groupId)
+    {
+        try
+        {
+            var group = await context.Groups
+                .Include(g => g.Members)
+                .FirstOrDefaultAsync(g => g.Id == groupId);
+
+            if (group == null)
+            {
+                return ApiResponse<bool>.ErrorResponse("Group not found", null, 404);
+            }
+
+            // Remove all members first
+            context.GroupMembers.RemoveRange(group.Members);
+
+            // Remove the group
+            context.Groups.Remove(group);
+
+            await context.SaveChangesAsync();
+
+            logger.LogInformation("Group {GroupId} deleted successfully", groupId);
+            return ApiResponse<bool>.SuccessResponse(true, "Group deleted successfully");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error deleting group {GroupId}", groupId);
+            return ApiResponse<bool>.ErrorResponse(
+                "Failed to delete group",
+                new List<string> { ex.Message },
+                500
+            );
+        }
+    }
+
+    public async Task<ApiResponse<List<GroupMemberDto>>> GetGroupMembersAsync(Guid groupId)
+    {
+        try
+        {
+            var group = await context.Groups.FindAsync(groupId);
+
+            if (group == null)
+            {
+                return ApiResponse<List<GroupMemberDto>>.ErrorResponse("Group not found", null, 404);
+            }
+
+            var onlineThreshold = DateTime.UtcNow.AddMinutes(-10);
+
+            var members = await context.GroupMembers
+                .Include(gm => gm.User)
+                    .ThenInclude(u => u.Profile)
+                .Where(gm => gm.GroupId == groupId)
+                .Select(gm => new GroupMemberDto
+                {
+                    Id = gm.Id.ToString(),
+                    GroupId = groupId.ToString(),
+                    UserId = gm.UserId.ToString(),
+                    Role = "Member",
+                    JoinedAt = gm.JoinedAt,
+                    User = new DTOs.Users.UserSummaryDto
+                    {
+                        Id = gm.UserId.ToString(),
+                        Name = $"{gm.User.FirstName} {gm.User.LastName}".Trim(),
+                        AvatarUrl = null,
+                        Country = gm.User.Profile != null ? gm.User.Profile.HomeCountry : null,
+                        IsOnline = gm.User.LastActive.HasValue && gm.User.LastActive >= onlineThreshold
+                    }
+                })
+                .OrderBy(gm => gm.JoinedAt)
+                .ToListAsync();
+
+            return ApiResponse<List<GroupMemberDto>>.SuccessResponse(members);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving members for group {GroupId}", groupId);
+            return ApiResponse<List<GroupMemberDto>>.ErrorResponse(
+                "Failed to retrieve group members",
+                new List<string> { ex.Message },
+                500
+            );
+        }
+    }
+
+    public async Task<ApiResponse<UserGroupsResponse>> GetUserGroupsAsync(int userId)
+    {
+        try
+        {
+            var user = await context.Users.FindAsync(userId);
+
+            if (user == null)
+            {
+                return ApiResponse<UserGroupsResponse>.ErrorResponse("User not found", null, 404);
+            }
+
+            var onlineThreshold = DateTime.UtcNow.AddMinutes(-10);
+
+            var userGroups = await context.GroupMembers
+                .Include(gm => gm.Group)
+                    .ThenInclude(g => g.Members)
+                        .ThenInclude(m => m.User)
+                .Where(gm => gm.UserId == userId && gm.Group.IsActive)
+                .Select(gm => new GroupDto
+                {
+                    Id = gm.Group.Id.ToString(),
+                    Name = gm.Group.Name,
+                    Description = gm.Group.Description,
+                    Category = "General",
+                    IsPrivate = false,
+                    MemberCount = gm.Group.Members.Count,
+                    OnlineCount = gm.Group.Members.Count(m => m.User.LastActive.HasValue && m.User.LastActive >= onlineThreshold),
+                    CreatedAt = gm.Group.CreatedAt
+                })
+                .ToListAsync();
+
+            var response = new UserGroupsResponse
+            {
+                Groups = userGroups,
+                TotalGroups = userGroups.Count,
+                TotalMemberCount = userGroups.Sum(g => g.MemberCount)
+            };
+
+            return ApiResponse<UserGroupsResponse>.SuccessResponse(response);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving groups for user {UserId}", userId);
+            return ApiResponse<UserGroupsResponse>.ErrorResponse(
+                "Failed to retrieve user groups",
                 new List<string> { ex.Message },
                 500
             );

@@ -37,6 +37,10 @@ public class User
 
     public DateTime? LastActive { get; set; }
 
+    [Required]
+    [MaxLength(20)]
+    public string Role { get; set; } = "User";
+
     // Navigation property
     public Profile? Profile { get; set; }
 

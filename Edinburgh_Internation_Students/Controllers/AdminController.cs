@@ -7,7 +7,7 @@ namespace Edinburgh_Internation_Students.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Policy = "AdminOnly")]
 public class AdminController : ControllerBase
 {
     private readonly IGroupService _groupService;

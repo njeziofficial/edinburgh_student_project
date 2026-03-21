@@ -46,11 +46,12 @@ public class NotificationsController(
     }
 
     /// <summary>
-    /// Delete a notification
+    /// Delete a notification (Admin only)
     /// </summary>
     /// <param name="id">Notification ID</param>
     /// <returns>Success status</returns>
     [HttpDelete("{id}")]
+    [Authorize(Policy = "AdminOnly")]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status403Forbidden)]

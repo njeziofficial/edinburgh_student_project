@@ -184,12 +184,13 @@ public class MessagesController(IMessageService messageService, ILogger<Messages
     }
 
     /// <summary>
-    /// Delete a message
+    /// Delete a message (Admin only)
     /// </summary>
     /// <param name="groupId">Group ID</param>
     /// <param name="messageId">Message ID</param>
     /// <returns>Success status</returns>
     [HttpDelete("{messageId}")]
+    [Authorize(Policy = "AdminOnly")]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status404NotFound)]

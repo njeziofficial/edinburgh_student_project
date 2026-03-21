@@ -5,17 +5,8 @@ using System.Security.Claims;
 
 namespace Edinburgh_Internation_Students.Middleware;
 
-public class LastActiveMiddleware
+public class LastActiveMiddleware(RequestDelegate next, ILogger<LastActiveMiddleware> logger)
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<LastActiveMiddleware> _logger;
-
-    public LastActiveMiddleware(RequestDelegate next, ILogger<LastActiveMiddleware> logger)
-    {
-        _next = next;
-        _logger = logger;
-    }
-
     public async Task InvokeAsync(HttpContext context, ApplicationDbContext dbContext)
     {
         // Update LastActive for authenticated users
@@ -39,10 +30,10 @@ public class LastActiveMiddleware
             catch (Exception ex)
             {
                 // Log error but don't fail the request
-                _logger.LogError(ex, "Error updating LastActive for user");
+                logger.LogError(ex, "Error updating LastActive for user");
             }
         }
 
-        await _next(context);
+        await next(context);
     }
 }

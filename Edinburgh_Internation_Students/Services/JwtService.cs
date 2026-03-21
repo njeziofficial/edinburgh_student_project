@@ -8,7 +8,7 @@ namespace Edinburgh_Internation_Students.Services;
 
 public interface IJwtService
 {
-    string GenerateToken(int userId, string email, string firstName, string lastName);
+    string GenerateToken(int userId, string email, string firstName, string lastName, string role);
     ClaimsPrincipal? ValidateToken(string token);
 }
 
@@ -16,7 +16,7 @@ public class JwtService(JwtSettings jwtSettings) : IJwtService
 {
     private readonly JwtSettings _jwtSettings = jwtSettings;
 
-    public string GenerateToken(int userId, string email, string firstName, string lastName)
+    public string GenerateToken(int userId, string email, string firstName, string lastName, string role)
     {
         var claims = new[]
         {
@@ -28,7 +28,8 @@ public class JwtService(JwtSettings jwtSettings) : IJwtService
             new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()),
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(ClaimTypes.Email, email),
-            new Claim(ClaimTypes.Name, $"{firstName} {lastName}")
+            new Claim(ClaimTypes.Name, $"{firstName} {lastName}"),
+            new Claim(ClaimTypes.Role, role)
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));

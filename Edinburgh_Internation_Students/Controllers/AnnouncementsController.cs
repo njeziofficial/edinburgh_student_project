@@ -169,11 +169,12 @@ public class AnnouncementsController : ControllerBase
     }
 
     /// <summary>
-    /// Delete an announcement
+    /// Delete an announcement (Admin only)
     /// </summary>
     /// <param name="id">Announcement ID</param>
     /// <returns>Success status</returns>
     [HttpDelete("{id}")]
+    [Authorize(Policy = "AdminOnly")]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status404NotFound)]

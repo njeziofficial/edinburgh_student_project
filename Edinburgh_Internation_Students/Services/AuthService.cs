@@ -58,7 +58,7 @@ public class AuthService(ApplicationDbContext context, IJwtService jwtService, I
             logger.LogError(ex, "Error assigning user {UserId} to group on signup", user.Id);
         }
 
-        var token = jwtService.GenerateToken(user.Id, user.Email, user.FirstName, user.LastName);
+        var token = jwtService.GenerateToken(user.Id, user.Email, user.FirstName, user.LastName, user.Role);
 
         var response = new AuthResponse
         {
@@ -94,7 +94,7 @@ public class AuthService(ApplicationDbContext context, IJwtService jwtService, I
         user.LastActive = DateTime.UtcNow;
         await context.SaveChangesAsync();
 
-        var token = jwtService.GenerateToken(user.Id, user.Email, user.FirstName, user.LastName);
+        var token = jwtService.GenerateToken(user.Id, user.Email, user.FirstName, user.LastName, user.Role);
 
         var response = new AuthResponse
         {
@@ -134,7 +134,8 @@ public class AuthService(ApplicationDbContext context, IJwtService jwtService, I
                 refreshToken.User.Id,
                 refreshToken.User.Email,
                 refreshToken.User.FirstName,
-                refreshToken.User.LastName
+                refreshToken.User.LastName,
+                refreshToken.User.Role
             );
 
             var newRefreshToken = GenerateRefreshToken();

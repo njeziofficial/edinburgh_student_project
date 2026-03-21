@@ -10,16 +10,8 @@ namespace Edinburgh_Internation_Students.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class EventsController : ControllerBase
+public class EventsController(IEventService eventService, ILogger<EventsController> logger) : ControllerBase
 {
-    private readonly IEventService _eventService;
-    private readonly ILogger<EventsController> _logger;
-
-    public EventsController(IEventService eventService, ILogger<EventsController> logger)
-    {
-        _eventService = eventService;
-        _logger = logger;
-    }
 
     /// <summary>
     /// Get all events
@@ -32,15 +24,15 @@ public class EventsController : ControllerBase
     {
         try
         {
-            var response = await _eventService.GetAllEventsAsync();
+            var response = await eventService.GetAllEventsAsync();
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while retrieving all events");
+            logger.LogError(ex, "Error occurred while retrieving all events");
             var errorResponse = ApiResponse<List<EventDto>>.ErrorResponse(
                 "An error occurred while processing your request",
-                new List<string> { ex.Message },
+                [ex.Message],
                 500
             );
             return StatusCode(500, errorResponse);
@@ -60,15 +52,15 @@ public class EventsController : ControllerBase
     {
         try
         {
-            var response = await _eventService.GetEventByIdAsync(id);
+            var response = await eventService.GetEventByIdAsync(id);
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while retrieving event {EventId}", id);
+            logger.LogError(ex, "Error occurred while retrieving event {EventId}", id);
             var errorResponse = ApiResponse<EventDto>.ErrorResponse(
                 "An error occurred while processing your request",
-                new List<string> { ex.Message },
+                [ex.Message],
                 500
             );
             return StatusCode(500, errorResponse);
@@ -104,15 +96,15 @@ public class EventsController : ControllerBase
             }
 
             var userId = User.GetUserId();
-            var response = await _eventService.CreateEventAsync(userId, request);
+            var response = await eventService.CreateEventAsync(userId, request);
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while creating event");
+            logger.LogError(ex, "Error occurred while creating event");
             var errorResponse = ApiResponse<EventDto>.ErrorResponse(
                 "An error occurred while processing your request",
-                new List<string> { ex.Message },
+                [ex.Message],
                 500
             );
             return StatusCode(500, errorResponse);
@@ -151,12 +143,12 @@ public class EventsController : ControllerBase
             }
 
             var userId = User.GetUserId();
-            var response = await _eventService.UpdateEventAsync(id, userId, request);
+            var response = await eventService.UpdateEventAsync(id, userId, request);
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while updating event {EventId}", id);
+            logger.LogError(ex, "Error occurred while updating event {EventId}", id);
             var errorResponse = ApiResponse<EventDto>.ErrorResponse(
                 "An error occurred while processing your request",
                 new List<string> { ex.Message },
@@ -167,11 +159,12 @@ public class EventsController : ControllerBase
     }
 
     /// <summary>
-    /// Delete an event
+    /// Delete an event (Admin only)
     /// </summary>
     /// <param name="id">Event ID</param>
     /// <returns>Success status</returns>
     [HttpDelete("{id}")]
+    [Authorize(Policy = "AdminOnly")]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status404NotFound)]
@@ -181,12 +174,12 @@ public class EventsController : ControllerBase
         try
         {
             var userId = User.GetUserId();
-            var response = await _eventService.DeleteEventAsync(id, userId);
+            var response = await eventService.DeleteEventAsync(id, userId);
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while deleting event {EventId}", id);
+            logger.LogError(ex, "Error occurred while deleting event {EventId}", id);
             var errorResponse = ApiResponse<bool>.ErrorResponse(
                 "An error occurred while processing your request",
                 new List<string> { ex.Message },
@@ -222,12 +215,12 @@ public class EventsController : ControllerBase
             }
 
             var userId = User.GetUserId();
-            var response = await _eventService.RsvpEventAsync(id, userId, status);
+            var response = await eventService.RsvpEventAsync(id, userId, status);
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while updating RSVP for event {EventId}", id);
+            logger.LogError(ex, "Error occurred while updating RSVP for event {EventId}", id);
             var errorResponse = ApiResponse<EventAttendeeDto>.ErrorResponse(
                 "An error occurred while processing your request",
                 new List<string> { ex.Message },
@@ -250,12 +243,12 @@ public class EventsController : ControllerBase
     {
         try
         {
-            var response = await _eventService.GetEventAttendeesAsync(id);
+            var response = await eventService.GetEventAttendeesAsync(id);
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while retrieving attendees for event {EventId}", id);
+            logger.LogError(ex, "Error occurred while retrieving attendees for event {EventId}", id);
             var errorResponse = ApiResponse<List<EventAttendeeDto>>.ErrorResponse(
                 "An error occurred while processing your request",
                 new List<string> { ex.Message },

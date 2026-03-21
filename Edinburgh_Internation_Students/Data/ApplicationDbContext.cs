@@ -49,6 +49,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .IsRequired()
                 .HasMaxLength(60);
 
+            entity.Property(e => e.Role)
+                .IsRequired()
+                .HasMaxLength(20)
+                .HasDefaultValue("User");
+
             entity.Property(e => e.PhoneCode)
                 .HasMaxLength(5);
 

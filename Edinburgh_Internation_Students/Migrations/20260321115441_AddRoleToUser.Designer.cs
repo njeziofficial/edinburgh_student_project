@@ -3,6 +3,7 @@ using System;
 using Edinburgh_Internation_Students.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Edinburgh_Internation_Students.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260321115441_AddRoleToUser")]
+    partial class AddRoleToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -62,7 +65,7 @@ namespace Edinburgh_Internation_Students.Migrations
 
                     b.HasIndex("Priority");
 
-                    b.ToTable("Announcements", (string)null);
+                    b.ToTable("Announcements");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.ChecklistItem", b =>
@@ -99,7 +102,7 @@ namespace Edinburgh_Internation_Students.Migrations
 
                     b.HasIndex("GroupId");
 
-                    b.ToTable("ChecklistItems", (string)null);
+                    b.ToTable("ChecklistItems");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.Event", b =>
@@ -159,7 +162,7 @@ namespace Edinburgh_Internation_Students.Migrations
 
                     b.HasIndex("OrganizerId");
 
-                    b.ToTable("Events", (string)null);
+                    b.ToTable("Events");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.EventAttendee", b =>
@@ -186,7 +189,7 @@ namespace Edinburgh_Internation_Students.Migrations
                     b.HasIndex("EventId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("EventAttendees", (string)null);
+                    b.ToTable("EventAttendees");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.Group", b =>
@@ -220,7 +223,7 @@ namespace Edinburgh_Internation_Students.Migrations
 
                     b.HasIndex("IsActive");
 
-                    b.ToTable("Groups", (string)null);
+                    b.ToTable("Groups");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.GroupIcebreaker", b =>
@@ -248,7 +251,7 @@ namespace Edinburgh_Internation_Students.Migrations
 
                     b.HasIndex("GroupId");
 
-                    b.ToTable("GroupIcebreakers", (string)null);
+                    b.ToTable("GroupIcebreakers");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.GroupMember", b =>
@@ -277,7 +280,7 @@ namespace Edinburgh_Internation_Students.Migrations
                     b.HasIndex("GroupId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("GroupMembers", (string)null);
+                    b.ToTable("GroupMembers");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.Message", b =>
@@ -315,7 +318,7 @@ namespace Edinburgh_Internation_Students.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("Messages", (string)null);
+                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.MessageReaction", b =>
@@ -347,7 +350,7 @@ namespace Edinburgh_Internation_Students.Migrations
                     b.HasIndex("MessageId", "UserId", "Emoji")
                         .IsUnique();
 
-                    b.ToTable("MessageReactions", (string)null);
+                    b.ToTable("MessageReactions");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.Notification", b =>
@@ -390,7 +393,7 @@ namespace Edinburgh_Internation_Students.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.Poll", b =>
@@ -426,7 +429,7 @@ namespace Edinburgh_Internation_Students.Migrations
 
                     b.HasIndex("GroupId");
 
-                    b.ToTable("Polls", (string)null);
+                    b.ToTable("Polls");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.PollOption", b =>
@@ -450,7 +453,7 @@ namespace Edinburgh_Internation_Students.Migrations
 
                     b.HasIndex("PollId");
 
-                    b.ToTable("PollOptions", (string)null);
+                    b.ToTable("PollOptions");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.PollVote", b =>
@@ -482,7 +485,7 @@ namespace Edinburgh_Internation_Students.Migrations
                     b.HasIndex("PollId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("PollVotes", (string)null);
+                    b.ToTable("PollVotes");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.Profile", b =>
@@ -547,7 +550,7 @@ namespace Edinburgh_Internation_Students.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Profiles", (string)null);
+                    b.ToTable("Profiles");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.RefreshToken", b =>
@@ -582,7 +585,7 @@ namespace Edinburgh_Internation_Students.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.User", b =>
@@ -644,7 +647,7 @@ namespace Edinburgh_Internation_Students.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Edinburgh_Internation_Students.Models.Announcement", b =>

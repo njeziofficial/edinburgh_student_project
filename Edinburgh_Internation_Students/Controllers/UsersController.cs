@@ -13,21 +13,11 @@ namespace Edinburgh_Internation_Students.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class UsersController : ControllerBase
+public class UsersController(
+    IUserService userService,
+    INotificationService notificationService,
+    ILogger<UsersController> logger) : ControllerBase
 {
-    private readonly IUserService _userService;
-    private readonly INotificationService _notificationService;
-    private readonly ILogger<UsersController> _logger;
-
-    public UsersController(
-        IUserService userService,
-        INotificationService notificationService,
-        ILogger<UsersController> logger)
-    {
-        _userService = userService;
-        _notificationService = notificationService;
-        _logger = logger;
-    }
 
     /// <summary>
     /// Get all users
@@ -40,12 +30,12 @@ public class UsersController : ControllerBase
     {
         try
         {
-            var response = await _userService.GetAllUsersAsync();
+            var response = await userService.GetAllUsersAsync();
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while retrieving all users");
+            logger.LogError(ex, "Error occurred while retrieving all users");
             var errorResponse = ApiResponse<List<UserDto>>.ErrorResponse(
                 "An error occurred while processing your request",
                 [ex.Message],
@@ -68,12 +58,12 @@ public class UsersController : ControllerBase
     {
         try
         {
-            var response = await _userService.GetUserByIdAsync(id);
+            var response = await userService.GetUserByIdAsync(id);
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while retrieving user {UserId}", id);
+            logger.LogError(ex, "Error occurred while retrieving user {UserId}", id);
             var errorResponse = ApiResponse<UserDto>.ErrorResponse(
                 "An error occurred while processing your request",
                 new List<string> { ex.Message },
@@ -125,12 +115,12 @@ public class UsersController : ControllerBase
                 return BadRequest(validationResponse);
             }
 
-            var response = await _userService.UpdateUserAsync(id, request);
+            var response = await userService.UpdateUserAsync(id, request);
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while updating user {UserId}", id);
+            logger.LogError(ex, "Error occurred while updating user {UserId}", id);
             var errorResponse = ApiResponse<UserDto>.ErrorResponse(
                 "An error occurred while processing your request",
                 [ex.Message],
@@ -145,7 +135,13 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <param name="id">User ID</param>
     /// <returns>Success status</returns>
+    /// <summary>
+    /// Delete a user account (Admin only)
+    /// </summary>
+    /// <param name="id">User ID to delete</param>
+    /// <returns>Deletion confirmation</returns>
     [HttpDelete("{id}")]
+    [Authorize(Policy = "AdminOnly")]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status500InternalServerError)]
@@ -153,24 +149,12 @@ public class UsersController : ControllerBase
     {
         try
         {
-            // Verify the user is deleting their own account
-            var currentUserId = User.GetUserId();
-            if (currentUserId != id)
-            {
-                var forbiddenResponse = ApiResponse<bool>.ErrorResponse(
-                    "You can only delete your own account",
-                    null,
-                    403
-                );
-                return StatusCode(403, forbiddenResponse);
-            }
-
-            var response = await _userService.DeleteUserAsync(id);
+            var response = await userService.DeleteUserAsync(id);
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while deleting user {UserId}", id);
+            logger.LogError(ex, "Error occurred while deleting user {UserId}", id);
             var errorResponse = ApiResponse<bool>.ErrorResponse(
                 "An error occurred while processing your request",
                 new List<string> { ex.Message },
@@ -222,12 +206,12 @@ public class UsersController : ControllerBase
                 return BadRequest(validationResponse);
             }
 
-            var response = await _userService.CompleteOnboardingAsync(id, request);
+            var response = await userService.CompleteOnboardingAsync(id, request);
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while completing onboarding for user {UserId}", id);
+            logger.LogError(ex, "Error occurred while completing onboarding for user {UserId}", id);
             var errorResponse = ApiResponse<UserDto>.ErrorResponse(
                 "An error occurred while processing your request",
                 new List<string> { ex.Message },
@@ -249,12 +233,12 @@ public class UsersController : ControllerBase
     {
         try
         {
-            var response = await _userService.GetUserGroupsAsync(id);
+            var response = await userService.GetUserGroupsAsync(id);
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while retrieving groups for user {UserId}", id);
+            logger.LogError(ex, "Error occurred while retrieving groups for user {UserId}", id);
             var errorResponse = ApiResponse<UserGroupsResponse>.ErrorResponse(
                 "An error occurred while processing your request",
                 new List<string> { ex.Message },
@@ -276,12 +260,12 @@ public class UsersController : ControllerBase
     {
         try
         {
-            var response = await _userService.GetUserEventsAsync(id);
+            var response = await userService.GetUserEventsAsync(id);
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while retrieving events for user {UserId}", id);
+            logger.LogError(ex, "Error occurred while retrieving events for user {UserId}", id);
             var errorResponse = ApiResponse<List<EventDto>>.ErrorResponse(
                 "An error occurred while processing your request",
                 new List<string> { ex.Message },
@@ -303,12 +287,12 @@ public class UsersController : ControllerBase
     {
         try
         {
-            var response = await _userService.GetUserNotificationsAsync(id);
+            var response = await userService.GetUserNotificationsAsync(id);
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while retrieving notifications for user {UserId}", id);
+            logger.LogError(ex, "Error occurred while retrieving notifications for user {UserId}", id);
             var errorResponse = ApiResponse<List<NotificationDto>>.ErrorResponse(
                 "An error occurred while processing your request",
                 [ex.Message],
@@ -342,12 +326,12 @@ public class UsersController : ControllerBase
                 return StatusCode(403, forbiddenResponse);
             }
 
-            var response = await _notificationService.MarkAllAsReadAsync(id);
+            var response = await notificationService.MarkAllAsReadAsync(id);
             return StatusCode(response.StatusCode, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while marking all notifications as read for user {UserId}", id);
+            logger.LogError(ex, "Error occurred while marking all notifications as read for user {UserId}", id);
             var errorResponse = ApiResponse<bool>.ErrorResponse(
                 "An error occurred while processing your request",
                 new List<string> { ex.Message },

@@ -19,6 +19,11 @@ var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSetting
     ?? throw new InvalidOperationException("JWT Settings not configured");
 builder.Services.AddSingleton(jwtSettings);
 
+// Configure Admin Settings
+var adminSettings = builder.Configuration.GetSection("AdminSettings").Get<AdminSettings>() 
+    ?? throw new InvalidOperationException("Admin Settings not configured");
+builder.Services.AddSingleton(adminSettings);
+
 // Configure Group Rotation Settings
 var groupRotationSettings = builder.Configuration.GetSection("GroupRotationSettings").Get<GroupRotationSettings>() 
     ?? new GroupRotationSettings();
@@ -54,7 +59,10 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+});
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -153,11 +161,52 @@ using (var scope = app.Services.CreateScope())
         {
             logger.LogInformation("Database is up to date. No pending migrations");
         }
+
+        // Seed admin user
+        await SeedAdminUser(context, adminSettings, logger);
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred while migrating the database");
+        throw;
+    }
+}
+
+// Method to seed admin user
+static async Task SeedAdminUser(ApplicationDbContext context, AdminSettings adminSettings, ILogger logger)
+{
+    try
+    {
+        var adminExists = await context.Users.AnyAsync(u => u.Email == adminSettings.Email);
+
+        if (!adminExists)
+        {
+            var adminUser = new User
+            {
+                FirstName = "System",
+                LastName = "Administrator",
+                Email = adminSettings.Email,
+                Role = "Admin",
+                CreatedAt = DateTime.UtcNow,
+                LastActive = DateTime.UtcNow
+            };
+
+            adminUser.SetPassword(adminSettings.Password);
+
+            context.Users.Add(adminUser);
+            await context.SaveChangesAsync();
+
+            logger.LogInformation("Admin user created successfully with email: {Email}", adminSettings.Email);
+        }
+        else
+        {
+            logger.LogInformation("Admin user already exists with email: {Email}", adminSettings.Email);
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Error occurred while seeding admin user");
         throw;
     }
 }
