@@ -3,12 +3,12 @@ using Edinburgh_Internation_Students.DTOs;
 using Edinburgh_Internation_Students.DTOs.Auth;
 using Edinburgh_Internation_Students.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Edinburgh_Internation_Students.Configuration;
 using System.Security.Cryptography;
 
 namespace Edinburgh_Internation_Students.Services;
 
-public class AuthService(ApplicationDbContext context, IJwtService jwtService, IGroupService groupService, ILogger<AuthService> logger, IConfiguration configuration) : IAuthService
+public class AuthService(ApplicationDbContext context, IJwtService jwtService, IGroupService groupService, ILogger<AuthService> logger, IConfiguration configuration, AdminSettings adminSettings) : IAuthService
 {
     // Read allowed domain from configuration (fallback to @live.napier.ac.uk)
     private string AllowedDomain => configuration["Auth:AllowedEmailDomain"] ?? "@live.napier.ac.uk";
@@ -86,6 +86,13 @@ public class AuthService(ApplicationDbContext context, IJwtService jwtService, I
 
     public async Task<(bool Success, AuthResponse? Response, string ErrorMessage)> SignInAsync(SignInRequest request)
     {
+        // Prevent admin from using the regular login endpoint
+        if (!string.IsNullOrWhiteSpace(adminSettings?.Email) &&
+            string.Equals(request.Email?.Trim(), adminSettings.Email.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            return (false, null, "Admin accounts must sign in via /api/auth/admin-login");
+        }
+
         if (!IsAllowedDomain(request.Email))
         {
             return (false, null, "Login is restricted to @live.napier.ac.uk email addresses");
@@ -120,6 +127,64 @@ public class AuthService(ApplicationDbContext context, IJwtService jwtService, I
             PhoneNumber = user.PhoneNumber,
             Token = token,
             Message = "Sign in successful"
+        };
+
+        return (true, response, string.Empty);
+    }
+
+    public async Task<(bool Success, AuthResponse? Response, string ErrorMessage)> SignInAdminAsync(SignInRequest request)
+    {
+        // Basic validation
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+        {
+            return (false, null, "Email and password are required");
+        }
+
+        // Verify credentials against configured admin settings
+        if (adminSettings == null ||
+            !string.Equals(request.Email.Trim(), adminSettings.Email.Trim(), StringComparison.OrdinalIgnoreCase) ||
+            request.Password != adminSettings.Password)
+        {
+            return (false, null, "Invalid admin credentials");
+        }
+
+        // Find or create admin user in database
+        var user = await context.Users
+            .FirstOrDefaultAsync(u => EF.Functions.ILike(u.Email, adminSettings.Email));
+
+        if (user == null)
+        {
+            user = new User
+            {
+                FirstName = "System",
+                LastName = "Administrator",
+                Email = adminSettings.Email.ToLower(),
+                Role = "Admin",
+                CreatedAt = DateTime.UtcNow,
+                LastActive = DateTime.UtcNow
+            };
+
+            user.SetPassword(adminSettings.Password);
+            await context.Users.AddAsync(user);
+            await context.SaveChangesAsync();
+        }
+
+        user.UpdatedAt = DateTime.UtcNow;
+        user.LastActive = DateTime.UtcNow;
+        await context.SaveChangesAsync();
+
+        var token = jwtService.GenerateToken(user.Id, user.Email, user.FirstName, user.LastName, user.Role);
+
+        var response = new AuthResponse
+        {
+            UserId = user.Id,
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            PhoneCode = user.PhoneCode,
+            PhoneNumber = user.PhoneNumber,
+            Token = token,
+            Message = "Admin sign in successful"
         };
 
         return (true, response, string.Empty);

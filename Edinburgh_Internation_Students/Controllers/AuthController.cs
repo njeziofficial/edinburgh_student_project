@@ -38,6 +38,8 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
             });
         }
 
+
+
         try
         {
             var (success, response, errorMessage) = await authService.SignUpAsync(request);
@@ -101,6 +103,55 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
         catch (Exception ex)
         {
             logger.LogError(ex, "Error occurred during sign in for email: {Email}", request.Email);
+            return StatusCode(500, new ErrorResponse
+            {
+                Message = "An error occurred while processing your request"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Admin sign in using credentials from configuration (appsettings.json)
+    /// </summary>
+    /// <param name="request">Sign in credentials (email and password)</param>
+    /// <returns>Admin user details if successful</returns>
+    [HttpPost("admin-login")]
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> AdminLogin([FromBody] SignInRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState
+                .Where(x => x.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray() ?? Array.Empty<string>()
+                );
+
+            return BadRequest(new ErrorResponse
+            {
+                Message = "Validation failed",
+                Errors = errors
+            });
+        }
+
+        try
+        {
+            var (success, response, errorMessage) = await authService.SignInAdminAsync(request);
+
+            if (!success)
+            {
+                return Unauthorized(new ErrorResponse { Message = errorMessage });
+            }
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred during admin sign in for email: {Email}", request.Email);
             return StatusCode(500, new ErrorResponse
             {
                 Message = "An error occurred while processing your request"
