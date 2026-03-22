@@ -307,7 +307,7 @@ GET /api/groups/{groupId}/members
 ```bash
 POST /api/auth/signin
 {
-  "email": "admin@platform.com",
+  "email": "admin@live.napier.ac.uk",
   "password": "admin123"
 }
 ```

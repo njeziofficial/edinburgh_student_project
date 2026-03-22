@@ -2,7 +2,7 @@
 
 ## Admin Login Credentials
 ```
-Email: admin@platform.com
+Email: admin@live.napier.ac.uk
 Password: admin123
 ```
 
@@ -13,7 +13,7 @@ Password: admin123
 curl -X POST http://localhost:5000/api/auth/signin \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@platform.com",
+    "email": "admin@live.napier.ac.uk",
     "password": "admin123"
   }'
 ```
@@ -24,7 +24,7 @@ curl -X POST http://localhost:5000/api/auth/signin \
   "success": true,
   "data": {
     "userId": 1,
-    "email": "admin@platform.com",
+    "email": "admin@live.napier.ac.uk",
     "firstName": "System",
     "lastName": "Administrator",
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -101,7 +101,7 @@ Admin tokens include the following role claim:
 {
   "role": "Admin",
   "sub": "1",
-  "email": "admin@platform.com",
+  "email": "admin@live.napier.ac.uk",
   "given_name": "System",
   "family_name": "Administrator"
 }
@@ -117,11 +117,11 @@ dotnet run
 ### 2. Admin User is Auto-Created
 Check logs for:
 ```
-Admin user created successfully with email: admin@platform.com
+Admin user created successfully with email: admin@live.napier.ac.uk
 ```
 OR
 ```
-Admin user already exists with email: admin@platform.com
+Admin user already exists with email: admin@live.napier.ac.uk
 ```
 
 ### 3. Login as Admin
@@ -145,13 +145,13 @@ Access Swagger UI at: `http://localhost:5000/swagger`
 
 Check admin user in database:
 ```sql
-SELECT * FROM "Users" WHERE "Email" = 'admin@platform.com';
+SELECT * FROM "Users" WHERE "Email" = 'admin@live.napier.ac.uk';
 ```
 
 Expected result:
 ```
 Id | FirstName | LastName      | Email               | Role  | CreatedAt
-1  | System    | Administrator | admin@platform.com  | Admin | 2024-...
+1  | System    | Administrator | admin@live.napier.ac.uk| Admin | 2024-...
 ```
 
 ## Troubleshooting

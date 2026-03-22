@@ -17,7 +17,7 @@ This document summarizes the implementation of admin user functionality with rol
 ### 3. Updated appsettings.json
 - **File**: `appsettings.json`
 - Added `AdminSettings` section with:
-  - Email: `admin@platform.com`
+  - Email: `admin@live.napier.ac.uk`
   - Password: `admin123`
 
 ### 4. Updated Database Configuration
@@ -81,7 +81,7 @@ All delete operations now require Admin role:
 ## Admin User Details
 
 ### Credentials (from appsettings.json)
-- **Email**: admin@platform.com
+- **Email**: admin@live.napier.ac.uk
 - **Password**: admin123
 - **Role**: Admin
 - **FirstName**: System
@@ -124,7 +124,7 @@ All delete operations now require Admin role:
 ```bash
 POST /api/auth/signin
 {
-  "email": "admin@platform.com",
+  "email": "admin@live.napier.ac.uk",
   "password": "admin123"
 }
 ```

@@ -134,7 +134,7 @@ Authorization: Bearer {token}
 # Login as admin
 POST /api/auth/signin
 {
-  "email": "admin@platform.com",
+  "email": "admin@live.napier.ac.uk",
   "password": "admin123"
 }
 
@@ -209,7 +209,7 @@ curl -X DELETE "http://localhost:5000/api/groups/{groupId}/members/{myUserId}" \
 
 ### "Forbidden" (403)
 - Missing admin role for admin-only operations
-- Login as admin: `admin@platform.com` / `admin123`
+- Login as admin: `admin@live.napier.ac.uk` / `admin123`
 
 ## Related Features
 
