@@ -3,13 +3,15 @@ using Edinburgh_Internation_Students.DTOs;
 using Edinburgh_Internation_Students.DTOs.Auth;
 using Edinburgh_Internation_Students.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System.Security.Cryptography;
 
 namespace Edinburgh_Internation_Students.Services;
 
-public class AuthService(ApplicationDbContext context, IJwtService jwtService, IGroupService groupService, ILogger<AuthService> logger) : IAuthService
+public class AuthService(ApplicationDbContext context, IJwtService jwtService, IGroupService groupService, ILogger<AuthService> logger, IConfiguration configuration) : IAuthService
 {
-    private const string _allowedDomain = "@live.napier.ac.uk";
+    // Read allowed domain from configuration (fallback to @live.napier.ac.uk)
+    private string AllowedDomain => configuration["Auth:AllowedEmailDomain"] ?? "@live.napier.ac.uk";
 
     public async Task<(bool Success, AuthResponse? Response, string ErrorMessage)> SignUpAsync(SignUpRequest request)
     {
@@ -368,8 +370,8 @@ public class AuthService(ApplicationDbContext context, IJwtService jwtService, I
     }
 
     // Helper methods
-    private static bool IsAllowedDomain(string? email) =>
-        !string.IsNullOrWhiteSpace(email) && email.Trim().ToLower().EndsWith(_allowedDomain);
+    private bool IsAllowedDomain(string? email) =>
+        !string.IsNullOrWhiteSpace(email) && email.Trim().ToLower().EndsWith(AllowedDomain.ToLower());
 
     private bool IsExistingUser(string email) =>
         context.Users.Any(u => EF.Functions.ILike(u.Email, email));
