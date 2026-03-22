@@ -9,8 +9,15 @@ namespace Edinburgh_Internation_Students.Services;
 
 public class AuthService(ApplicationDbContext context, IJwtService jwtService, IGroupService groupService, ILogger<AuthService> logger) : IAuthService
 {
+    private const string _allowedDomain = "@live.napier.ac.uk";
+
     public async Task<(bool Success, AuthResponse? Response, string ErrorMessage)> SignUpAsync(SignUpRequest request)
     {
+        if (!IsAllowedDomain(request.Email))
+        {
+            return (false, null, "Registration is restricted to @live.napier.ac.uk email addresses");
+        }
+
         var existingUser = await context.Users
             .FirstOrDefaultAsync(u => EF.Functions.ILike(u.Email, request.Email));
 
@@ -77,6 +84,11 @@ public class AuthService(ApplicationDbContext context, IJwtService jwtService, I
 
     public async Task<(bool Success, AuthResponse? Response, string ErrorMessage)> SignInAsync(SignInRequest request)
     {
+        if (!IsAllowedDomain(request.Email))
+        {
+            return (false, null, "Login is restricted to @live.napier.ac.uk email addresses");
+        }
+
         var user = await context.Users
             .FirstOrDefaultAsync(u => EF.Functions.ILike(u.Email, request.Email));
 
@@ -356,6 +368,9 @@ public class AuthService(ApplicationDbContext context, IJwtService jwtService, I
     }
 
     // Helper methods
+    private static bool IsAllowedDomain(string? email) =>
+        !string.IsNullOrWhiteSpace(email) && email.Trim().ToLower().EndsWith(_allowedDomain);
+
     private bool IsExistingUser(string email) =>
         context.Users.Any(u => EF.Functions.ILike(u.Email, email));
 

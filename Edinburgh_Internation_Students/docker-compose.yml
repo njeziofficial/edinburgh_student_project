@@ -16,14 +16,51 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - edinburgh_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+
+  # Datadog agent removed — using Grafana + Loki for logging/visualization
+
+  loki:
+    image: grafana/loki:2.9.1
+    container_name: edinburgh_loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki_data:/loki
+    networks:
+      - edinburgh_network
+
+  grafana:
+    image: grafana/grafana:9.5.6
+    container_name: edinburgh_grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - edinburgh_network
+
+  promtail:
+    image: grafana/promtail:2.9.1
+    container_name: edinburgh_promtail
+    restart: unless-stopped
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ../promtail-config.yaml:/etc/promtail/config.yaml:ro
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - edinburgh_network
 
   api:
-    build: .
+    build:
+      context: ..
+      dockerfile: Dockerfile
     container_name: edinburgh_students_api
     restart: always
     depends_on:
@@ -35,6 +72,7 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=edinburgh_students_db;Username=postgres;Password=postgres
+      # Logging/monitoring is handled by Grafana + Loki (promtail collects logs)
     networks:
       - edinburgh_network
 
@@ -44,3 +82,5 @@ networks:
 
 volumes:
   postgres_data:
+  loki_data:
+  grafana_data:
